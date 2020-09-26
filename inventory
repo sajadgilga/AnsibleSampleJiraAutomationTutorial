@@ -1,8 +1,12 @@
-[servers]
+[leafs]
 jira ansible_host=94.182.191.69
-confluence ansible_host=94.182.191.69 
 
-[servers:vars]
+[leafs:vars]
 ansible_user=root
+ansible_password="nilva-company2020"
 ansible_network_os=vyos
 ansible_connection=network_cli
+ansible_python_interpreter=/usr/bin/python3
+
+[network:children]
+leafs

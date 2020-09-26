@@ -1,0 +1,70 @@
+---
+
+- name: ansible test playbook
+  connection: network_cli
+  gather_facts: false
+  hosts: all
+  tasks:
+	- name: Create atlassian installation directory
+	  file: 
+	    path: /opt/atlassian
+		state: directory
+
+	- name: Create atlassian home directory
+	  file:
+		path: /var/atlassian/jira
+		state: directory
+
+	- name: Download jira file
+      get_url:
+        url: {{ item }}
+		with_items: 
+		  - https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.5.8.tar.gz
+		  - https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-core-8.5.8.tar.gz
+		  - https://product-downloads.atlassian.com/software/jira/downloads/atlassian-servicedesk-4.5.8.tar.gz
+		dest: /opt/atlassian 
+
+	- name: Extract jira package
+	  unarchive: 
+		src: /opt/atlassian/atlassian-jira-software-8.5.8.tar.gz
+		dest: /opt/atlassian/jira
+		remote_src: yes
+
+	- name: Install postgres
+	  apt:
+		name: {{ item }}
+		update_cache: yes
+	  with_items:
+    	- postgresql
+    	- postgresql-contrib
+    	- libpq-dev
+    	- python-psycopg2
+
+	- name: Ensure the PostgreSQL service is running
+  	  service: 
+		name: postgresql 
+		state: started 
+		enabled: yes
+
+	- name: Create jira databae 
+	  community.general.postgresql_db:
+		name: jiradb
+		encoding: UNICODE
+		lc_collate: C
+		lc_ctype: C
+		template: template0
+
+	- name: Create jira user for database
+	  community.general.postgresql_user:
+		db: jiradb	
+		name: jirauser
+		password: '!qaz2wsx'
+		priv: ALL
+	
+	- name: Add jira path to environment
+	  shell: 'echo "export JIRA_HOME=$JIRA_HOME" >> ~/.bashrc' 
+	  environment: 
+		JIRA_HOME: /var/atlassian/jira
+
+	- name: Run jira
+	  shell: 'sh /opt/atlassian/jira/bin/start-jira.sh'
