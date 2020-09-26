@@ -1,0 +1,8 @@
+[servers]
+jira ansible_host=94.182.191.69
+confluence ansible_host=94.182.191.69 
+
+[servers:vars]
+ansible_user=root
+ansible_network_os=vyos
+ansible_connection=network_cli
